@@ -1,5 +1,131 @@
-﻿@page "/learnmore"
+﻿@page "/learnmore/{id:int}"
+@using Blazor_pizza.Data
+@inject PizzaService PizzaSvc
+@inject NavigationManager NavigationManager
+@using System.Collections.Generic;
+
+<style>
+    .button-1 {
+        background-color: #EC583D;
+        color: white;
+        font-family: 'Century Gothic';
+        border-color: #EC583D;
+        border-radius: 16px;
+        height: 80px;
+        width: 10%;
+        margin-right: 25%;
+        font-size: 30px
+    }
+
+    .searchbar-1 {
+        display: block;
+        width: 40%;
+        height: 80px;
+        font-size: 30px;
+        margin-left: 25%;
+        margin-right: 2%
+    }
+
+    .checkbox-1 {
+        border-radius: 16px;
+        width: 2%;
+        margin-right: 2%
+    }
+
+    .normalText {
+        font-family: 'Century Gothic';
+        font-size: 30px;
+        margin-right: 2%
+    }
+
+    .boldText {
+        font-family: 'Century Gothic';
+        font-size: 30px;
+        font-weight: bold;
+        margin-left: 25%;
+        margin-right: 10%
+    }
+
+    .pizzaInfo {
+        width: 15%;
+        height: 400px;
+        border: 3px solid #0D0C0C;
+        border-radius: 16px;
+        opacity: 1;
+        margin-right: 2.5%;
+    }
+
+    .title {
+        padding: 10px;
+        font-family: 'Century Gothic';
+        font-size: 30px;
+        font-weight: bold;
+    }
+
+    .price {
+        font-family: 'Century Gothic';
+        font-size: 30px;
+        padding: 10px;
+    }
+
+</style>
+
+<div style="display: flex; align-items: center; justify-content: center">
+    <button class="button-1" @onclick="()=>navigateBack()">Back</button>
+    <button style="width: 15%; margin-right: 0%" class="button-1" @onclick="()=>onAddToBasket()">Add to basket</button>
+</div>
+<br /> <br /> <br />
+
+<div style="opacity: 1; margin-right: 2.5%; height: 500px; border-radius: 16px">
+    <img src=@getImageURL(individualPizza.Name) alt=@individualPizza.Name style="margin-left: 25%"/> @*image of the pizza*@
+    <label class="title" >@individualPizza.Name</label>
+    <label class="normalText">@individualPizza.Price</label>
+</div>
+
+<div style="display: flex; align-items: center; justify-content: center">
+    @if (addedToBasket == true)
+    {
+        <br />
+        <label class="normalText">Thankyou for adding this item to your basket</label>
+    }
+</div>
+
+
 
 @code {
+    [ Parameter ]
+    public int id { get; set; }
+
+    public bool addedToBasket = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        individualPizza = await PizzaSvc.getPizzabyID(id);
+    }
+
+    private Pizza individualPizza = new Pizza();
+
+    private void navigateBack()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    // This function returns the url for an image
+    private string getImageURL(string pizzaName) { return "Images/" + pizzaName + ".png"; }
+
+    private void onAddToBasket()
+    {
+        addedToBasket = true;
+        // Creates new basket item
+        if (Basket.contains())
+        {
+            
+        }
+        else
+        {
+            BasketItem x = new BasketItem(individualPizza.PizzaId, individualPizza.Name, individualPizza.Price, 1);
+        }
+
+    }
 
 }

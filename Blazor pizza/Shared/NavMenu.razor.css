@@ -57,3 +57,7 @@
         display: block;
     }
 }
+
+.navbar-nav li a{
+    text-decoration: none;
+}

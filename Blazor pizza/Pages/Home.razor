@@ -1,6 +1,7 @@
 ﻿@page "/"
 @using Blazor_pizza.Data
 @inject PizzaService PizzaSvc
+@inject NavigationManager NavigationManager
 
 <head>
     <link href="~/css/StyleSheet.css" rel="stylesheet" />
@@ -82,17 +83,21 @@
 @*the our menu, and the vegan/vegetarian checkboxes*@
 <div style="display: flex">
     <label class="boldText">Our Menu</label>
-    <input type="checkbox" class="checkbox-1" />
+    <input type="checkbox" class="checkbox-1" bind="isVegetarian" @oninput="onVegetarianChange"/>
     <label class="normalText">Vegetarian</label>
-    <input type="checkbox" class="checkbox-1"/>
+    <input type="checkbox" class="checkbox-1" bind="isVegan" @oninput="onVeganChange"/>
     <label class="normalText">Vegan</label>
 </div><br />
 
 @*search bar and submit search button*@
 <div style="display: flex">
-    <input type="search" class="searchbar-1" />
-    <button class="button-1">Submit</button>
+    <input @bind-value="searchInput" type="search" class="searchbar-1" />
+
+
+    <button @onclick="getPizzas" class="button-1">Submit</button>
+
 </div><br /><br /><br />
+
 
 @*This iterates through all the pizzas held in the database and displays their price and name*@
 <div style="display:flex; flex-wrap:wrap; align-items: centre; justify-content: center">
@@ -100,84 +105,151 @@
     {
         if (pizza != null)
         {
-            if ((count-1) % 4 == 0 && count != 1)
+            if ((count - 1) % 4 == 0 && count != 1)
             {
                 <div style="flex-basis: 100%; height: 0%"></div>
-                <br /><br />
+                <br />
 
-
+                <br />
                 <div class="pizzaInfo">
-                    <img src="Images/Pepperoni.png" alt=@pizza.Name style="width: 100%" /> @*image of the pizza*@
+                    <img src=@getImageURL(pizza.Name) alt=@pizza.Name style="width: 100%" /> @*image of the pizza*@
 
                     @*this checks whether the pizza is vegan or vegetarian and displays an icon showing this*@
                     @if (pizza.Vegetarian == true)
                     {
                         // display vegan
-                        @if (pizza.Vegan == true) {  <span class="price" style="color: forestgreen">Vegan</span><br /> }
+                        @if (pizza.Vegan == true)
+                        {
+                            <span class="price" style="color: forestgreen">Vegan</span>
+
+                            <br />
+                        }
                         //its only vegetarian so display vegetarian logo
-                        else { <span class="price" style="color: forestgreen">Vegetarian</span><br /> }
+                        else
+                        {
+                            <span class="price" style="color: forestgreen">Vegetarian</span>
+
+                            <br />
+                        }
                     }
                     // it is neither vegan or vegetarian so leave a space
-                    else { <div style="flex-basis: 100%; height: 0%"></div><br /><br /> }
+                    else
+                    {
+                        <div style="flex-basis: 100%; height: 0%"></div>
+
+                        <br />
+
+                        <br />
+                    }
 
 
                     <span class="title">@pizza.Name</span><br />
                     <span class="price">@pizza.Price</span><br />
-                    <button class="button-1" style="width:90%; height: 15%; margin-left: 5%">Learn more</button>
+                    <button class="button-1" @onclick="()=>navigateToIndividualPizza(pizza.PizzaId)" style="width:90%; height: 15%; margin-left: 5%">Learn more</button>
 
                 </div>
+
+
             }
             else
             {
                 <div class="pizzaInfo">
-                    <img src="Images/Pepperoni.png" alt=@pizza.Name style="width: 100%"/> @*image of the pizza*@
+                    <img src=@getImageURL(pizza.Name) alt=@pizza.Name style="width: 100%" /> @*image of the pizza*@
 
                     @*this checks whether the pizza is vegan or vegetarian and displays an icon showing this*@
                     @if (pizza.Vegetarian == true)
                     {
+                        // display vegan
                         @if (pizza.Vegan == true)
                         {
-                            // display vegan
-                            <span class="price" style="color: forestgreen">Vegan</span><br />
+                            <span class="price" style="color: forestgreen">Vegan</span>
+
+                            <br />
                         }
+                        //its only vegetarian so display vegetarian logo
                         else
                         {
-                            //its only vegetarian so display vegetarian logo
-                            <span class="price" style="color: forestgreen">Vegetarian</span><br />
+                            <span class="price" style="color: forestgreen">Vegetarian</span>
+
+                            <br />
                         }
                     }
+                    // it is neither vegan or vegetarian so leave a space
                     else
                     {
-                        // it is neither vegan or vegetarian so leave a space
-                        <div style="flex-basis: 100%; height: 0%"></div><br /><br />
+                        <div style="flex-basis: 100%; height: 0%"></div>
+
+                        <br />
+
+                        <br />
                     }
+
 
                     <span class="title">@pizza.Name</span><br />
                     <span class="price">@pizza.Price</span><br />
-                    <button class="button-1" style="width:90%; height: 15%; margin-left: 5%">Learn more</button>
+                    <button class="button-1" @onclick="()=>navigateToIndividualPizza(pizza.PizzaId)" style="width:90%; height: 15%; margin-left: 5%">Learn more</button>
+
                 </div>
             }
 
             count += 1;
         }
-        
-        
+   
     }
 </div>
+
+
+
+<br /><br /><br /><br /><br />
+
 
 
 @code   
 {
 
     private int count = 1;
-
     private List<Pizza> todaysPizzas = new List<Pizza>();
+    private bool isVegan;
+    private bool isVegetarian;
+
+    private string searchInput;
 
     protected override async Task OnInitializedAsync()
     {
-        todaysPizzas = await PizzaSvc.GetPizzasAsync();
+        await getPizzas();  // await - for when you have an async task wrong longer than usual - make smore efficient
+    }
+
+    // This function returns the url for an image
+    private string getImageURL(string pizzaName) { return "Images/" + pizzaName + ".png"; }
+
+    public async Task getPizzas()
+    {
+        todaysPizzas = await PizzaSvc.GetPizzasSearch(searchInput, isVegan, isVegetarian);
+    }
+
+    private async Task onVegetarianChange(ChangeEventArgs e)
+    {
+        isVegetarian = (bool) e.Value;
+        await getPizzas();
+    }
+
+    private async Task onVeganChange(ChangeEventArgs e)
+    {
+        isVegan = (bool)e.Value;
+        await getPizzas();
+    }
+
+    private void navigateToIndividualPizza(int id)
+    {
+        NavigationManager.NavigateTo($"/learnmore/{id}");
     }
 
     
+    
+        
 
+   
+
+
+    
 }

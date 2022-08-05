@@ -14,6 +14,6 @@
 
         public bool Vegan { get; set; }
 
-
+        
     }
 }
